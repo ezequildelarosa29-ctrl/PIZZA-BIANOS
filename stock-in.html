@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Stock In – Pizza Bianos</title>
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+<div class="app-page">
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-brand"><div class="sb-logo">🍕</div><div><strong>Pizza Bianos</strong><small>Inventory System</small></div></div>
+    <nav>
+      <span class="nav-section-label">Main Menu</span>
+      <button class="nav-item" data-page="dashboard.html" onclick="location.href='dashboard.html'"><div class="nav-icon-wrap">📊</div><span class="nav-label">Dashboard</span></button>
+      <button class="nav-item" data-page="products.html" onclick="location.href='products.html'"><div class="nav-icon-wrap">📦</div><span class="nav-label">Products</span><span class="nav-badge hidden" id="lowStockBadge">0</span></button>
+      <button class="nav-item" data-page="stock-in.html" onclick="location.href='stock-in.html'"><div class="nav-icon-wrap">⬇️</div><span class="nav-label">Stock In</span></button>
+      <button class="nav-item" data-page="stock-out.html" onclick="location.href='stock-out.html'"><div class="nav-icon-wrap">⬆️</div><span class="nav-label">Stock Out</span></button>
+      <button class="nav-item" data-page="sales.html" onclick="location.href='sales.html'"><div class="nav-icon-wrap">🧾</div><span class="nav-label">Sales</span></button>
+      <button class="nav-item" data-page="reports.html" onclick="location.href='reports.html'"><div class="nav-icon-wrap">📋</div><span class="nav-label">Reports</span></button>
+      <span class="nav-section-label">Management</span>
+      <button class="nav-item" data-page="users.html" onclick="location.href='users.html'"><div class="nav-icon-wrap">👥</div><span class="nav-label">Users</span></button>
+      <button class="nav-item" data-page="users.html#settings" onclick="location.href='users.html#settings'"><div class="nav-icon-wrap">⚙️</div><span class="nav-label">Settings</span></button>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="sync-status-bar"><div class="sync-dot online"></div><span>Firebase Connected</span></div>
+      <div class="user-card-mini"><div class="user-avatar" id="sbAvatar">A</div><div><strong id="sbUserName">Admin</strong><small id="sbUserRole">Administrator</small></div></div>
+      <button class="sb-logout-btn logout-btn">🚪 <span>Logout</span></button>
+    </div>
+  </aside>
+
+  <div class="main">
+    <header class="topbar">
+      <button class="menu-btn" id="menuBtn">☰</button>
+      <div class="topbar-title"><h1>Stock In</h1><p>Record incoming inventory</p></div>
+      <div class="topbar-right"><div class="topbar-user-pill"><div class="pill-avatar" id="topbarAvatar">A</div><span id="topbarUserName">Admin</span></div></div>
+    </header>
+    <div class="overlay hidden" id="sidebarOverlay"></div>
+    <main class="content">
+      <div class="page-head">
+        <div><h2>Stock In Records</h2><p>Track all incoming stock deliveries</p></div>
+        <div class="page-head-actions"><button class="btn btn-primary" id="newStockInBtn">➕ New Stock In</button></div>
+      </div>
+      <div class="stats-grid stats-grid-3" style="margin-bottom:20px" id="sinStats">
+        <div class="stat-card"><div class="stat-icon-wrap si-green">📥</div><div class="stat-body"><h3>—</h3><p>Total Records</p></div></div>
+        <div class="stat-card"><div class="stat-icon-wrap si-blue">📅</div><div class="stat-body"><h3>—</h3><p>Records Today</p></div></div>
+        <div class="stat-card"><div class="stat-icon-wrap si-purple">📦</div><div class="stat-body"><h3>—</h3><p>Total Units Received</p></div></div>
+      </div>
+      <div class="toolbar">
+        <input type="text" class="search-box" id="searchBox" placeholder="🔍  Search product or supplier…" />
+        <input type="date" class="form-control" id="filterDate" />
+        <button class="btn btn-ghost btn-sm" id="clearDate">Clear</button>
+        <span id="totalBadge" class="badge badge-green" style="margin-left:auto"></span>
+      </div>
+      <div class="panel">
+        <div class="table-wrapper">
+          <table>
+            <thead><tr><th>ID</th><th>Date</th><th>Product</th><th class="number">Quantity</th><th>Unit</th><th>Supplier</th><th>Received By</th><th>Action</th></tr></thead>
+            <tbody id="sinBody"></tbody>
+          </table>
+        </div>
+        <div id="paginationWrap"></div>
+        <div id="emptyState"></div>
+      </div>
+    </main>
+  </div>
+</div>
+
+<!-- NEW STOCK IN MODAL -->
+<div class="modal hidden" id="sinModal">
+  <div class="modal-card" style="width:min(560px,100%)">
+    <div class="modal-header"><h2>New Stock In</h2><button class="close-btn" id="closeSinModal">✕</button></div>
+    <form id="sinForm" novalidate>
+      <div class="form-grid">
+        <div class="form-group full"><label>Product <span class="req">*</span></label><select class="form-control" id="fProduct"><option value="">Select product</option></select></div>
+        <div class="form-group"><label>Quantity <span class="req">*</span></label><input type="number" class="form-control" id="fQty" placeholder="0" min="1" /></div>
+        <div class="form-group"><label>Unit</label><input type="text" class="form-control" id="fUnit" placeholder="Auto-filled from product" /></div>
+        <div class="form-group full"><label>Supplier</label><input type="text" class="form-control" id="fSupplier" placeholder="Supplier name" /></div>
+        <div class="form-group full"><label>Date <span class="req">*</span></label><input type="date" class="form-control" id="fDate" /></div>
+        <div class="form-group full"><label>Notes</label><textarea class="form-control" id="fNotes" placeholder="Optional…"></textarea></div>
+      </div>
+      <div id="sinError" class="error-msg" style="padding:0 20px 10px"></div>
+      <div class="form-actions">
+        <button type="button" class="btn btn-ghost" id="cancelSinModal">Cancel</button>
+        <button type="submit" class="btn btn-success">✔ Record Stock In</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- VIEW MODAL -->
+<div class="modal hidden" id="viewModal">
+  <div class="modal-card" style="width:min(460px,100%)">
+    <div class="modal-header"><h2>Stock In Details</h2><button class="close-btn" id="closeViewModal">✕</button></div>
+    <div id="viewBody" style="padding:24px"></div>
+    <div class="form-actions"><button class="btn btn-ghost" id="closeViewModal2">Close</button></div>
+  </div>
+</div>
+
+<div id="toast" class="toast"></div>
+
+<script type="module">
+  import { authGuard, DB, formatDate, today, paginate, renderPagination, showToast, openModal, closeModal } from './js/app.js';
+
+  let allRecords = [];
+  let allProducts = [];
+  let currentPage = 1;
+  const PAGE_SIZE = 10;
+  let session;
+
+  document.getElementById('closeSinModal').onclick  = () => closeModal('sinModal');
+  document.getElementById('cancelSinModal').onclick = () => closeModal('sinModal');
+  document.getElementById('closeViewModal').onclick  = () => closeModal('viewModal');
+  document.getElementById('closeViewModal2').onclick = () => closeModal('viewModal');
+
+  authGuard(async (s) => {
+    session = s;
+    const [records, products] = await Promise.all([DB.getStockIn(), DB.getProducts()]);
+    allRecords  = records;
+    allProducts = products;
+    buildStats();
+    renderTable(1);
+  });
+
+  function buildStats() {
+    const todayStr = today();
+    const todayRec = allRecords.filter(r => r.date === todayStr);
+    const total    = allRecords.reduce((s,r) => s + Number(r.quantity||0), 0);
+    document.getElementById('sinStats').innerHTML = `
+      <div class="stat-card"><div class="stat-icon-wrap si-green">📥</div><div class="stat-body"><h3>${allRecords.length}</h3><p>Total Records</p></div></div>
+      <div class="stat-card"><div class="stat-icon-wrap si-blue">📅</div><div class="stat-body"><h3>${todayRec.length}</h3><p>Records Today</p></div></div>
+      <div class="stat-card"><div class="stat-icon-wrap si-purple">📦</div><div class="stat-body"><h3>${total}</h3><p>Total Units Received</p></div></div>`;
+  }
+
+  function renderTable(page = 1) {
+    currentPage = page;
+    const search = document.getElementById('searchBox').value.toLowerCase();
+    const date   = document.getElementById('filterDate').value;
+    let data = allRecords.filter(r => {
+      const ms = !search || (r.product||'').toLowerCase().includes(search) || (r.supplier||'').toLowerCase().includes(search);
+      const md = !date   || r.date === date;
+      return ms && md;
+    });
+    document.getElementById('totalBadge').textContent = `${data.length} record${data.length!==1?'s':''}`;
+    const paged = paginate(data, page, PAGE_SIZE);
+    const tbody = document.getElementById('sinBody');
+    const empty = document.getElementById('emptyState');
+    if (!paged.data.length) {
+      tbody.innerHTML = '';
+      empty.innerHTML = `<div class="empty-state"><div class="es-icon">📥</div><h4>No stock in records</h4><p>Click "New Stock In" to add.</p></div>`;
+      document.getElementById('paginationWrap').innerHTML = '';
+      return;
+    }
+    empty.innerHTML = '';
+    tbody.innerHTML = paged.data.map(r => `
+      <tr>
+        <td><span class="badge badge-green" style="font-size:11px">${r.id}</span></td>
+        <td>${formatDate(r.date)}</td>
+        <td><strong>${r.product}</strong></td>
+        <td class="number fw-bold text-green">+${r.quantity}</td>
+        <td>${r.unit}</td>
+        <td>${r.supplier||'—'}</td>
+        <td>${r.receivedBy||'—'}</td>
+        <td><button class="btn btn-sm btn-ghost" data-view="${r.id}">👁 View</button></td>
+      </tr>`).join('');
+    renderPagination('paginationWrap', paged, renderTable);
+    tbody.querySelectorAll('[data-view]').forEach(b => b.onclick = () => viewRecord(b.dataset.view));
+  }
+
+  function viewRecord(id) {
+    const r = allRecords.find(x => x.id === id);
+    if (!r) return;
+    document.getElementById('viewBody').innerHTML = `
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+        <div><p class="text-muted" style="font-size:12px;font-weight:700;text-transform:uppercase">Record ID</p><p class="fw-bold mt-4" style="font-size:12px">${r.id}</p></div>
+        <div><p class="text-muted" style="font-size:12px;font-weight:700;text-transform:uppercase">Date</p><p class="mt-4">${formatDate(r.date)}</p></div>
+        <div><p class="text-muted" style="font-size:12px;font-weight:700;text-transform:uppercase">Product</p><p class="fw-bold mt-4">${r.product}</p></div>
+        <div><p class="text-muted" style="font-size:12px;font-weight:700;text-transform:uppercase">Quantity</p><p class="fw-800 mt-4 text-green">+${r.quantity} ${r.unit}</p></div>
+        <div><p class="text-muted" style="font-size:12px;font-weight:700;text-transform:uppercase">Supplier</p><p class="mt-4">${r.supplier||'—'}</p></div>
+        <div><p class="text-muted" style="font-size:12px;font-weight:700;text-transform:uppercase">Received By</p><p class="mt-4">${r.receivedBy||'—'}</p></div>
+        ${r.notes?`<div style="grid-column:1/-1"><p class="text-muted" style="font-size:12px;font-weight:700;text-transform:uppercase">Notes</p><p class="mt-4">${r.notes}</p></div>`:''}
+      </div>`;
+    openModal('viewModal');
+  }
+
+  document.getElementById('newStockInBtn').addEventListener('click', () => {
+    document.getElementById('sinForm').reset();
+    document.getElementById('fDate').value = today();
+    document.getElementById('fProduct').innerHTML = '<option value="">Select product</option>' +
+      allProducts.map(p => `<option value="${p.id}" data-unit="${p.unit}" data-supplier="${p.supplier||''}">${p.name} (${p.quantity||0} ${p.unit})</option>`).join('');
+    document.getElementById('sinError').textContent = '';
+    openModal('sinModal');
+  });
+
+  document.getElementById('fProduct').addEventListener('change', function() {
+    const opt = this.selectedOptions[0];
+    document.getElementById('fUnit').value     = opt?.dataset.unit     || '';
+    document.getElementById('fSupplier').value = opt?.dataset.supplier || '';
+  });
+
+  document.getElementById('sinForm').addEventListener('submit', async e => {
+    e.preventDefault();
+    const productId = document.getElementById('fProduct').value;
+    const qty       = parseInt(document.getElementById('fQty').value);
+    const unit      = document.getElementById('fUnit').value.trim();
+    const supplier  = document.getElementById('fSupplier').value.trim();
+    const date      = document.getElementById('fDate').value;
+    const notes     = document.getElementById('fNotes').value.trim();
+    const errEl     = document.getElementById('sinError');
+
+    if (!productId) { errEl.textContent='Please select a product.'; return; }
+    if (!qty||qty<1){ errEl.textContent='Quantity must be at least 1.'; return; }
+    if (!date)      { errEl.textContent='Please select a date.'; return; }
+    errEl.textContent = '';
+
+    const prod = allProducts.find(p => p.id === productId);
+    const btn  = e.target.querySelector('[type=submit]');
+    btn.disabled = true;
+    btn.textContent = 'Saving…';
+
+    try {
+      await DB.addStockIn({ product: prod.name, productId, quantity: qty, unit: unit||prod.unit, supplier, date, notes, receivedBy: session.name||session.email });
+      closeModal('sinModal');
+      showToast(`Stock In recorded! +${qty} ${unit||prod.unit} of ${prod.name}`, 'success');
+      const records = await DB.getStockIn();
+      allRecords = records;
+      buildStats();
+      renderTable(1);
+    } catch (err) {
+      errEl.textContent = err.message;
+    } finally {
+      btn.disabled = false; btn.textContent = '✔ Record Stock In';
+    }
+  });
+
+  document.getElementById('searchBox').addEventListener('input',   () => renderTable(1));
+  document.getElementById('filterDate').addEventListener('change', () => renderTable(1));
+  document.getElementById('clearDate').addEventListener('click',   () => { document.getElementById('filterDate').value=''; renderTable(1); });
+</script>
+</body>
+</html>

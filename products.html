@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Products – Pizza Bianos</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+<div class="app-page">
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-brand"><div class="sb-logo">🍕</div><div><strong>Pizza Bianos</strong><small>Inventory System</small></div></div>
+    <nav>
+      <span class="nav-section-label">Main Menu</span>
+      <button class="nav-item" data-page="dashboard.html" onclick="location.href='dashboard.html'"><div class="nav-icon-wrap">📊</div><span class="nav-label">Dashboard</span></button>
+      <button class="nav-item" data-page="products.html" onclick="location.href='products.html'"><div class="nav-icon-wrap">📦</div><span class="nav-label">Products</span><span class="nav-badge hidden" id="lowStockBadge">0</span></button>
+      <button class="nav-item" data-page="stock-in.html" onclick="location.href='stock-in.html'"><div class="nav-icon-wrap">⬇️</div><span class="nav-label">Stock In</span></button>
+      <button class="nav-item" data-page="stock-out.html" onclick="location.href='stock-out.html'"><div class="nav-icon-wrap">⬆️</div><span class="nav-label">Stock Out</span></button>
+      <button class="nav-item" data-page="sales.html" onclick="location.href='sales.html'"><div class="nav-icon-wrap">🧾</div><span class="nav-label">Sales</span></button>
+      <button class="nav-item" data-page="reports.html" onclick="location.href='reports.html'"><div class="nav-icon-wrap">📋</div><span class="nav-label">Reports</span></button>
+      <span class="nav-section-label">Management</span>
+      <button class="nav-item" data-page="users.html" onclick="location.href='users.html'"><div class="nav-icon-wrap">👥</div><span class="nav-label">Users</span></button>
+      <button class="nav-item" data-page="users.html#settings" onclick="location.href='users.html#settings'"><div class="nav-icon-wrap">⚙️</div><span class="nav-label">Settings</span></button>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="sync-status-bar"><div class="sync-dot online"></div><span>Firebase Connected</span></div>
+      <div class="user-card-mini"><div class="user-avatar" id="sbAvatar">A</div><div><strong id="sbUserName">Admin</strong><small id="sbUserRole">Administrator</small></div></div>
+      <button class="sb-logout-btn logout-btn">🚪 <span>Logout</span></button>
+    </div>
+  </aside>
+
+  <div class="main">
+    <header class="topbar">
+      <button class="menu-btn" id="menuBtn">☰</button>
+      <div class="topbar-title"><h1>Products</h1><p>Manage all inventory products</p></div>
+      <div class="topbar-right">
+        <div class="topbar-user-pill"><div class="pill-avatar" id="topbarAvatar">A</div><span id="topbarUserName">Admin</span></div>
+      </div>
+    </header>
+    <div class="overlay hidden" id="sidebarOverlay"></div>
+    <main class="content">
+      <div class="page-head">
+        <div><h2>Products</h2><p>All inventory items and stock levels</p></div>
+        <div class="page-head-actions"><button class="btn btn-primary" id="addProductBtn">➕ Add Product</button></div>
+      </div>
+      <div class="toolbar">
+        <input type="text" class="search-box" id="searchBox" placeholder="🔍  Search product…" />
+        <select class="select-box" id="filterCategory"><option value="">All Categories</option></select>
+        <select class="select-box" id="filterStock"><option value="">All Stock</option><option value="low">Low Stock</option><option value="ok">In Stock</option></select>
+        <span id="totalBadge" class="badge badge-blue" style="margin-left:auto"></span>
+      </div>
+      <div class="panel">
+        <div class="table-wrapper">
+          <table>
+            <thead><tr><th>#</th><th>Product Name</th><th>Category</th><th>Supplier</th><th class="number">Quantity</th><th>Unit</th><th class="number">Reorder</th><th>Status</th><th>Actions</th></tr></thead>
+            <tbody id="productsBody"></tbody>
+          </table>
+        </div>
+        <div id="paginationWrap"></div>
+        <div id="emptyState"></div>
+      </div>
+    </main>
+  </div>
+</div>
+
+<!-- ADD/EDIT MODAL -->
+<div class="modal hidden" id="productModal">
+  <div class="modal-card" style="width:min(580px,100%)">
+    <div class="modal-header"><h2 id="modalTitle">Add Product</h2><button class="close-btn" id="closeProductModal">✕</button></div>
+    <form id="productForm" novalidate>
+      <div class="form-grid">
+        <div class="form-group full"><label>Product Name <span class="req">*</span></label><input type="text" class="form-control" id="fName" placeholder="Enter product name" /></div>
+        <div class="form-group"><label>Category <span class="req">*</span></label>
+          <select class="form-control" id="fCategory">
+            <option value="">Select category</option>
+            <option>Ingredients</option><option>Vegetables</option><option>Beverages</option><option>Packaging</option><option>Cleaning Supplies</option><option>Others</option>
+          </select>
+        </div>
+        <div class="form-group"><label>Supplier</label><input type="text" class="form-control" id="fSupplier" placeholder="e.g. Supplier A" /></div>
+        <div class="form-group"><label>Quantity <span class="req">*</span></label><input type="number" class="form-control" id="fQuantity" placeholder="0" min="0" /></div>
+        <div class="form-group"><label>Unit <span class="req">*</span></label><input type="text" class="form-control" id="fUnit" placeholder="kg, pcs, bottle…" /></div>
+        <div class="form-group full"><label>Reorder Level</label><input type="number" class="form-control" id="fReorder" placeholder="5" min="0" /></div>
+      </div>
+      <div id="formError" class="error-msg" style="padding:0 20px 10px"></div>
+      <div class="form-actions">
+        <button type="button" class="btn btn-ghost" id="cancelProductModal">Cancel</button>
+        <button type="submit" class="btn btn-primary">💾 Save Product</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- VIEW MODAL -->
+<div class="modal hidden" id="viewModal">
+  <div class="modal-card" style="width:min(480px,100%)">
+    <div class="modal-header"><h2>Product Details</h2><button class="close-btn" id="closeViewModal">✕</button></div>
+    <div id="viewBody" style="padding:24px"></div>
+    <div class="form-actions"><button class="btn btn-ghost" id="closeViewModal2">Close</button></div>
+  </div>
+</div>
+
+<div id="toast" class="toast"></div>
+
+<script type="module">
+  import { authGuard, DB, formatDate, today, paginate, renderPagination, showToast, confirmDelete, openModal, closeModal, seedIfEmpty } from './js/app.js';
+
+  let allProducts = [];
+  let currentPage = 1;
+  const PAGE_SIZE = 10;
+  let editingId   = null;
+  let threshold   = 5;
+  let isAdmin     = false;
+
+  document.getElementById('closeProductModal').onclick = () => closeModal('productModal');
+  document.getElementById('cancelProductModal').onclick = () => closeModal('productModal');
+  document.getElementById('closeViewModal').onclick  = () => closeModal('viewModal');
+  document.getElementById('closeViewModal2').onclick = () => closeModal('viewModal');
+
+  authGuard(async (session) => {
+    isAdmin = session.role === 'Administrator';
+    if (!isAdmin) document.getElementById('addProductBtn').style.display = 'none';
+
+    const settings = await DB.getSettings();
+    threshold = settings.lowStockThreshold || 5;
+
+    /* Seed sample products if Firestore is empty */
+    await seedIfEmpty();
+
+    /* Real-time listener */
+    DB.onProducts(products => {
+      allProducts = products;
+      populateFilters();
+      renderTable(1);
+      /* Low stock badge */
+      const low = products.filter(p => (p.quantity||0) <= threshold).length;
+      const badge = document.getElementById('lowStockBadge');
+      badge.textContent = low;
+      badge.classList.toggle('hidden', low === 0);
+    });
+  });
+
+  function populateFilters() {
+    const cats = [...new Set(allProducts.map(p => p.category).filter(Boolean))];
+    const sel  = document.getElementById('filterCategory');
+    const cur  = sel.value;
+    sel.innerHTML = '<option value="">All Categories</option>' + cats.map(c=>`<option ${c===cur?'selected':''}>${c}</option>`).join('');
+  }
+
+  function renderTable(page = 1) {
+    currentPage = page;
+    const search  = document.getElementById('searchBox').value.toLowerCase();
+    const catFilt = document.getElementById('filterCategory').value;
+    const stFilt  = document.getElementById('filterStock').value;
+
+    let data = allProducts.filter(p => {
+      const ms = !search  || p.name.toLowerCase().includes(search) || (p.category||'').toLowerCase().includes(search) || (p.supplier||'').toLowerCase().includes(search);
+      const mc = !catFilt || p.category === catFilt;
+      const mk = !stFilt  || (stFilt==='low' && p.quantity<=threshold) || (stFilt==='ok' && p.quantity>threshold);
+      return ms && mc && mk;
+    });
+
+    document.getElementById('totalBadge').textContent = `${data.length} product${data.length!==1?'s':''}`;
+    const paged = paginate(data, page, PAGE_SIZE);
+    const tbody = document.getElementById('productsBody');
+    const empty = document.getElementById('emptyState');
+
+    if (!paged.data.length) {
+      tbody.innerHTML = '';
+      empty.innerHTML = `<div class="empty-state"><div class="es-icon">📦</div><h4>No products found</h4><p>Adjust your filters or add a product.</p></div>`;
+      document.getElementById('paginationWrap').innerHTML = '';
+      return;
+    }
+
+    empty.innerHTML = '';
+    tbody.innerHTML = paged.data.map((p, i) => {
+      const isLow = (p.quantity||0) <= threshold;
+      return `<tr class="${isLow?'low-stock':''}">
+        <td class="text-muted">${paged.from+i}</td>
+        <td><strong>${p.name}</strong></td>
+        <td>${p.category||'—'}</td>
+        <td>${p.supplier||'—'}</td>
+        <td class="number fw-bold ${isLow?'text-red':''}">${p.quantity||0}</td>
+        <td>${p.unit}</td>
+        <td class="number">${p.reorderLevel??'—'}</td>
+        <td>${isLow?'<span class="badge badge-red">⚠ Low</span>':'<span class="badge badge-green">✔ OK</span>'}</td>
+        <td><div class="actions">
+          <button class="btn btn-sm btn-ghost" data-view="${p.id}">👁 View</button>
+          ${isAdmin?`<button class="btn btn-sm btn-warning" data-edit="${p.id}">✏️ Edit</button>
+          <button class="btn btn-sm btn-danger" data-del="${p.id}">🗑 Delete</button>`:''}
+        </div></td>
+      </tr>`;
+    }).join('');
+
+    renderPagination('paginationWrap', paged, renderTable);
+
+    /* Bind action buttons */
+    tbody.querySelectorAll('[data-view]').forEach(b => b.onclick = () => viewProduct(b.dataset.view));
+    tbody.querySelectorAll('[data-edit]').forEach(b => b.onclick = () => editProduct(b.dataset.edit));
+    tbody.querySelectorAll('[data-del]').forEach(b  => b.onclick = () => delProduct(b.dataset.del));
+  }
+
+  function viewProduct(id) {
+    const p = allProducts.find(x => x.id === id);
+    if (!p) return;
+    const isLow = (p.quantity||0) <= threshold;
+    document.getElementById('viewBody').innerHTML = `
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+        <div><p class="text-muted" style="font-size:12px;font-weight:700;text-transform:uppercase">Product ID</p><p class="fw-bold mt-4">${p.id}</p></div>
+        <div><p class="text-muted" style="font-size:12px;font-weight:700;text-transform:uppercase">Name</p><p class="fw-bold mt-4">${p.name}</p></div>
+        <div><p class="text-muted" style="font-size:12px;font-weight:700;text-transform:uppercase">Category</p><p class="mt-4">${p.category||'—'}</p></div>
+        <div><p class="text-muted" style="font-size:12px;font-weight:700;text-transform:uppercase">Supplier</p><p class="mt-4">${p.supplier||'—'}</p></div>
+        <div><p class="text-muted" style="font-size:12px;font-weight:700;text-transform:uppercase">Quantity</p><p class="fw-800 mt-4 ${isLow?'text-red':''}">${p.quantity||0} ${p.unit}</p></div>
+        <div><p class="text-muted" style="font-size:12px;font-weight:700;text-transform:uppercase">Reorder Level</p><p class="mt-4">${p.reorderLevel??'—'}</p></div>
+        <div><p class="text-muted" style="font-size:12px;font-weight:700;text-transform:uppercase">Status</p><p class="mt-4">${isLow?'<span class="badge badge-red">⚠ Low Stock</span>':'<span class="badge badge-green">✔ In Stock</span>'}</p></div>
+      </div>`;
+    openModal('viewModal');
+  }
+
+  function editProduct(id) {
+    const p = allProducts.find(x => x.id === id);
+    if (!p) return;
+    editingId = id;
+    document.getElementById('modalTitle').textContent = 'Edit Product';
+    document.getElementById('fName').value     = p.name;
+    document.getElementById('fCategory').value = p.category||'';
+    document.getElementById('fSupplier').value = p.supplier||'';
+    document.getElementById('fQuantity').value = p.quantity||0;
+    document.getElementById('fUnit').value     = p.unit;
+    document.getElementById('fReorder').value  = p.reorderLevel??'';
+    document.getElementById('formError').textContent = '';
+    openModal('productModal');
+  }
+
+  async function delProduct(id) {
+    if (!confirmDelete('Delete this product? This cannot be undone.')) return;
+    try { await DB.deleteProduct(id); showToast('Product deleted.', 'success'); }
+    catch (e) { showToast('Error deleting product.', 'error'); }
+  }
+
+  document.getElementById('addProductBtn').addEventListener('click', () => {
+    editingId = null;
+    document.getElementById('modalTitle').textContent = 'Add Product';
+    document.getElementById('productForm').reset();
+    document.getElementById('formError').textContent = '';
+    openModal('productModal');
+  });
+
+  document.getElementById('productForm').addEventListener('submit', async e => {
+    e.preventDefault();
+    const name     = document.getElementById('fName').value.trim();
+    const category = document.getElementById('fCategory').value;
+    const supplier = document.getElementById('fSupplier').value.trim();
+    const quantity = parseInt(document.getElementById('fQuantity').value)||0;
+    const unit     = document.getElementById('fUnit').value.trim();
+    const reorder  = parseInt(document.getElementById('fReorder').value)||0;
+    const errEl    = document.getElementById('formError');
+    if (!name)     { errEl.textContent='Product name is required.'; return; }
+    if (!category) { errEl.textContent='Please select a category.'; return; }
+    if (!unit)     { errEl.textContent='Unit is required.'; return; }
+    errEl.textContent = '';
+
+    const data = { name, category, supplier, quantity, unit, reorderLevel: reorder };
+    try {
+      if (editingId) { await DB.updateProduct(editingId, data); showToast('Product updated!', 'success'); }
+      else           { await DB.addProduct(data);               showToast('Product added!',   'success'); }
+      closeModal('productModal');
+    } catch (err) { errEl.textContent = err.message; }
+  });
+
+  document.getElementById('searchBox').addEventListener('input',     () => renderTable(1));
+  document.getElementById('filterCategory').addEventListener('change', () => renderTable(1));
+  document.getElementById('filterStock').addEventListener('change',    () => renderTable(1));
+</script>
+</body>
+</html>
+

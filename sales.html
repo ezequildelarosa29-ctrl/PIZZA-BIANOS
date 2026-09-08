@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sales – Pizza Bianos</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+<div class="app-page">
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-brand"><div class="sb-logo">🍕</div><div><strong>Pizza Bianos</strong><small>Inventory System</small></div></div>
+    <nav>
+      <span class="nav-section-label">Main Menu</span>
+      <button class="nav-item" data-page="dashboard.html" onclick="location.href='dashboard.html'"><div class="nav-icon-wrap">📊</div><span class="nav-label">Dashboard</span></button>
+      <button class="nav-item" data-page="products.html" onclick="location.href='products.html'"><div class="nav-icon-wrap">📦</div><span class="nav-label">Products</span><span class="nav-badge hidden" id="lowStockBadge">0</span></button>
+      <button class="nav-item" data-page="stock-in.html" onclick="location.href='stock-in.html'"><div class="nav-icon-wrap">⬇️</div><span class="nav-label">Stock In</span></button>
+      <button class="nav-item" data-page="stock-out.html" onclick="location.href='stock-out.html'"><div class="nav-icon-wrap">⬆️</div><span class="nav-label">Stock Out</span></button>
+      <button class="nav-item" data-page="sales.html" onclick="location.href='sales.html'"><div class="nav-icon-wrap">🧾</div><span class="nav-label">Sales</span></button>
+      <button class="nav-item" data-page="reports.html" onclick="location.href='reports.html'"><div class="nav-icon-wrap">📋</div><span class="nav-label">Reports</span></button>
+      <span class="nav-section-label">Management</span>
+      <button class="nav-item" data-page="users.html" onclick="location.href='users.html'"><div class="nav-icon-wrap">👥</div><span class="nav-label">Users</span></button>
+      <button class="nav-item" data-page="users.html#settings" onclick="location.href='users.html#settings'"><div class="nav-icon-wrap">⚙️</div><span class="nav-label">Settings</span></button>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="sync-status-bar"><div class="sync-dot online"></div><span>Firebase Connected</span></div>
+      <div class="user-card-mini"><div class="user-avatar" id="sbAvatar">A</div><div><strong id="sbUserName">Admin</strong><small id="sbUserRole">Administrator</small></div></div>
+      <button class="sb-logout-btn logout-btn">🚪 <span>Logout</span></button>
+    </div>
+  </aside>
+
+  <div class="main">
+    <header class="topbar">
+      <button class="menu-btn" id="menuBtn">☰</button>
+      <div class="topbar-title"><h1>Sales</h1><p>Sales transactions and records</p></div>
+      <div class="topbar-right"><div class="topbar-user-pill"><div class="pill-avatar" id="topbarAvatar">A</div><span id="topbarUserName">Admin</span></div></div>
+    </header>
+    <div class="overlay hidden" id="sidebarOverlay"></div>
+
+    <main class="content">
+      <div class="page-head">
+        <div><h2>Sales Records</h2><p>All sales transactions</p></div>
+        <div class="page-head-actions"><button class="btn btn-primary" id="newSaleBtn">➕ New Sale</button></div>
+      </div>
+
+      <!-- Stats -->
+      <div class="stats-grid stats-grid-4" style="margin-bottom:20px" id="salesStats">
+        <div class="stat-card"><div class="stat-icon-wrap si-purple">🧾</div><div class="stat-body"><h3>—</h3><p>Total Transactions</p></div></div>
+        <div class="stat-card"><div class="stat-icon-wrap si-blue">📅</div><div class="stat-body"><h3>—</h3><p>Sales Today</p></div></div>
+        <div class="stat-card"><div class="stat-icon-wrap si-green">💰</div><div class="stat-body"><h3>—</h3><p>Revenue Today</p></div></div>
+        <div class="stat-card"><div class="stat-icon-wrap si-orange">📈</div><div class="stat-body"><h3>—</h3><p>Total Revenue</p></div></div>
+      </div>
+
+      <!-- Toolbar -->
+      <div class="toolbar">
+        <input type="text" class="search-box" id="searchBox" placeholder="🔍  Search invoice or customer…" />
+        <input type="date" class="form-control" id="filterDate" />
+        <select class="select-box" id="filterPayment">
+          <option value="">All Payment</option>
+          <option>Cash</option><option>GCash</option><option>Online</option><option>Card</option>
+        </select>
+        <button class="btn btn-ghost btn-sm" id="clearFilters">Clear</button>
+        <span id="totalBadge" class="badge badge-purple" style="margin-left:auto"></span>
+      </div>
+
+      <!-- Table -->
+      <div class="panel">
+        <div class="table-wrapper">
+          <table>
+            <thead><tr><th>Invoice #</th><th>Date</th><th>Customer</th><th class="number">Items</th><th class="number">Total Amount</th><th>Payment</th><th>Status</th><th>Action</th></tr></thead>
+            <tbody id="salesBody"></tbody>
+          </table>
+        </div>
+        <div id="paginationWrap"></div>
+        <div id="emptyState"></div>
+      </div>
+    </main>
+  </div>
+</div>
+
+<!-- NEW SALE MODAL -->
+<div class="modal hidden" id="saleModal">
+  <div class="modal-card" style="width:min(600px,100%)">
+    <div class="modal-header"><h2>New Sale</h2><button class="close-btn" id="closeSaleModal">✕</button></div>
+    <form id="saleForm" novalidate>
+      <div class="form-grid">
+        <div class="form-group full"><label>Customer Name</label><input type="text" class="form-control" id="fCustomer" placeholder="Walk-in Customer" /></div>
+        <div class="form-group"><label>Number of Items <span class="req">*</span></label><input type="number" class="form-control" id="fItems" placeholder="1" min="1" /></div>
+        <div class="form-group"><label>Total Amount (₱) <span class="req">*</span></label><input type="number" class="form-control" id="fAmount" placeholder="0.00" min="0" step="0.01" /></div>
+        <div class="form-group"><label>Payment Method <span class="req">*</span></label>
+          <select class="form-control" id="fPayment">
+            <option value="">Select payment</option>
+            <option>Cash</option><option>GCash</option><option>Online</option><option>Card</option>
+          </select>
+        </div>
+        <div class="form-group"><label>Status</label>
+          <select class="form-control" id="fStatus">
+            <option value="Paid">Paid</option><option value="Pending">Pending</option><option value="Cancelled">Cancelled</option>
+          </select>
+        </div>
+        <div class="form-group full"><label>Date <span class="req">*</span></label><input type="date" class="form-control" id="fDate" /></div>
+        <div class="form-group full"><label>Notes</label><textarea class="form-control" id="fNotes" placeholder="Optional notes…"></textarea></div>
+      </div>
+      <div id="saleError" class="error-msg" style="padding:0 20px 10px"></div>
+      <div class="form-actions">
+        <button type="button" class="btn btn-ghost" id="cancelSaleModal">Cancel</button>
+        <button type="submit" class="btn btn-primary">🧾 Save Sale</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- VIEW MODAL -->
+<div class="modal hidden" id="viewModal">
+  <div class="modal-card" style="width:min(480px,100%)">
+    <div class="modal-header"><h2 id="viewModalTitle">Sale Details</h2><button class="close-btn" id="closeViewModal">✕</button></div>
+    <div id="viewBody" style="padding:24px"></div>
+    <div class="form-actions">
+      <button class="btn btn-ghost btn-sm" onclick="window.print()">🖨 Print</button>
+      <button class="btn btn-ghost" id="closeViewModal2">Close</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast" class="toast"></div>
+
+<script type="module">
+  import { authGuard, DB, formatPeso, formatDate, today, paginate, renderPagination, showToast, openModal, closeModal } from './js/app.js';
+
+  let allSales = [];
+  let currentPage = 1;
+  const PAGE_SIZE = 10;
+  let session;
+
+  const PAY_BADGE = { Cash:'badge-green', GCash:'badge-blue', Online:'badge-purple', Card:'badge-orange' };
+  const STS_BADGE = { Paid:'badge-green', Pending:'badge-yellow', Cancelled:'badge-red' };
+
+  document.getElementById('closeSaleModal').onclick  = () => closeModal('saleModal');
+  document.getElementById('cancelSaleModal').onclick = () => closeModal('saleModal');
+  document.getElementById('closeViewModal').onclick  = () => closeModal('viewModal');
+  document.getElementById('closeViewModal2').onclick = () => closeModal('viewModal');
+
+  authGuard(async (s) => {
+    session = s;
+    allSales = await DB.getSales();
+    buildStats();
+    renderTable(1);
+  });
+
+  function buildStats() {
+    const todayStr   = today();
+    const todaySales = allSales.filter(s => s.date === todayStr);
+    const totalRev   = allSales.reduce((sum,s) => sum + Number(s.totalAmount||0), 0);
+    const todayRev   = todaySales.reduce((sum,s) => sum + Number(s.totalAmount||0), 0);
+    document.getElementById('salesStats').innerHTML = `
+      <div class="stat-card"><div class="stat-icon-wrap si-purple">🧾</div><div class="stat-body"><h3>${allSales.length}</h3><p>Total Transactions</p></div></div>
+      <div class="stat-card"><div class="stat-icon-wrap si-blue">📅</div><div class="stat-body"><h3>${todaySales.length}</h3><p>Sales Today</p></div></div>
+      <div class="stat-card"><div class="stat-icon-wrap si-green">💰</div><div class="stat-body"><h3 style="font-size:17px">${formatPeso(todayRev)}</h3><p>Revenue Today</p></div></div>
+      <div class="stat-card"><div class="stat-icon-wrap si-orange">📈</div><div class="stat-body"><h3 style="font-size:17px">${formatPeso(totalRev)}</h3><p>Total Revenue</p></div></div>`;
+  }
+
+  function renderTable(page = 1) {
+    currentPage = page;
+    const search  = document.getElementById('searchBox').value.toLowerCase();
+    const date    = document.getElementById('filterDate').value;
+    const payment = document.getElementById('filterPayment').value;
+
+    let data = allSales.filter(s => {
+      const ms = !search  || (s.id||'').toLowerCase().includes(search) || (s.customer||'').toLowerCase().includes(search);
+      const md = !date    || s.date === date;
+      const mp = !payment || s.payment === payment;
+      return ms && md && mp;
+    });
+
+    document.getElementById('totalBadge').textContent = `${data.length} record${data.length!==1?'s':''}`;
+    const paged = paginate(data, page, PAGE_SIZE);
+    const tbody = document.getElementById('salesBody');
+    const empty = document.getElementById('emptyState');
+
+    if (!paged.data.length) {
+      tbody.innerHTML = '';
+      empty.innerHTML = `<div class="empty-state"><div class="es-icon">🧾</div><h4>No sales records</h4><p>Click "New Sale" to add a transaction.</p></div>`;
+      document.getElementById('paginationWrap').innerHTML = '';
+      return;
+    }
+
+    empty.innerHTML = '';
+    tbody.innerHTML = paged.data.map(s => `
+      <tr>
+        <td><strong>${s.id||'—'}</strong></td>
+        <td>${formatDate(s.date)}</td>
+        <td>${s.customer||'Walk-in Customer'}</td>
+        <td class="number">${s.items}</td>
+        <td class="number fw-bold text-green">${formatPeso(s.totalAmount)}</td>
+        <td><span class="badge ${PAY_BADGE[s.payment]||'badge-gray'}">${s.payment}</span></td>
+        <td><span class="badge ${STS_BADGE[s.status]||'badge-gray'}">${s.status}</span></td>
+        <td><button class="btn btn-sm btn-ghost" data-view="${s.id}">👁 View</button></td>
+      </tr>`).join('');
+
+    renderPagination('paginationWrap', paged, renderTable);
+    tbody.querySelectorAll('[data-view]').forEach(b => b.onclick = () => viewSale(b.dataset.view));
+  }
+
+  function viewSale(id) {
+    const s = allSales.find(x => x.id === id);
+    if (!s) return;
+    document.getElementById('viewModalTitle').textContent = `Sale — ${s.id||''}`;
+    document.getElementById('viewBody').innerHTML = `
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+        <div><p class="text-muted" style="font-size:12px;font-weight:700;text-transform:uppercase">Invoice #</p><p class="fw-bold mt-4">${s.id||'—'}</p></div>
+        <div><p class="text-muted" style="font-size:12px;font-weight:700;text-transform:uppercase">Date</p><p class="mt-4">${formatDate(s.date)}</p></div>
+        <div><p class="text-muted" style="font-size:12px;font-weight:700;text-transform:uppercase">Customer</p><p class="mt-4">${s.customer||'Walk-in Customer'}</p></div>
+        <div><p class="text-muted" style="font-size:12px;font-weight:700;text-transform:uppercase">Items</p><p class="mt-4">${s.items}</p></div>
+        <div><p class="text-muted" style="font-size:12px;font-weight:700;text-transform:uppercase">Total Amount</p><p class="fw-800 mt-4 text-green" style="font-size:18px">${formatPeso(s.totalAmount)}</p></div>
+        <div><p class="text-muted" style="font-size:12px;font-weight:700;text-transform:uppercase">Payment</p><p class="mt-4"><span class="badge ${PAY_BADGE[s.payment]||'badge-gray'}">${s.payment}</span></p></div>
+        <div><p class="text-muted" style="font-size:12px;font-weight:700;text-transform:uppercase">Status</p><p class="mt-4"><span class="badge ${STS_BADGE[s.status]||'badge-gray'}">${s.status}</span></p></div>
+        <div><p class="text-muted" style="font-size:12px;font-weight:700;text-transform:uppercase">Created By</p><p class="mt-4">${s.createdBy||'—'}</p></div>
+        ${s.notes?`<div style="grid-column:1/-1"><p class="text-muted" style="font-size:12px;font-weight:700;text-transform:uppercase">Notes</p><p class="mt-4">${s.notes}</p></div>`:''}
+      </div>`;
+    openModal('viewModal');
+  }
+
+  document.getElementById('newSaleBtn').addEventListener('click', () => {
+    document.getElementById('saleForm').reset();
+    document.getElementById('fDate').value     = today();
+    document.getElementById('fStatus').value   = 'Paid';
+    document.getElementById('fCustomer').value = 'Walk-in Customer';
+    document.getElementById('saleError').textContent = '';
+    openModal('saleModal');
+  });
+
+  document.getElementById('saleForm').addEventListener('submit', async e => {
+    e.preventDefault();
+    const customer = document.getElementById('fCustomer').value.trim() || 'Walk-in Customer';
+    const items    = parseInt(document.getElementById('fItems').value)   || 0;
+    const amount   = parseFloat(document.getElementById('fAmount').value) || 0;
+    const payment  = document.getElementById('fPayment').value;
+    const status   = document.getElementById('fStatus').value;
+    const date     = document.getElementById('fDate').value;
+    const notes    = document.getElementById('fNotes').value.trim();
+    const errEl    = document.getElementById('saleError');
+
+    if (!items || items < 1)    { errEl.textContent='Number of items must be at least 1.'; return; }
+    if (!amount || amount <= 0) { errEl.textContent='Please enter a valid amount.'; return; }
+    if (!payment)               { errEl.textContent='Please select a payment method.'; return; }
+    if (!date)                  { errEl.textContent='Please select a date.'; return; }
+    errEl.textContent = '';
+
+    const btn = e.target.querySelector('[type=submit]');
+    btn.disabled = true; btn.textContent = 'Saving…';
+
+    try {
+      /* Generate invoice number from Firestore count */
+      const id = 'INV-' + Date.now().toString().slice(-6);
+      await DB.addSale({ id, customer, items, totalAmount: amount, payment, status, date, notes, createdBy: session.email });
+      closeModal('saleModal');
+      showToast(`Sale recorded! ${formatPeso(amount)}`, 'success');
+      allSales = await DB.getSales();
+      buildStats();
+      renderTable(1);
+    } catch (err) {
+      errEl.textContent = err.message;
+    } finally {
+      btn.disabled = false; btn.textContent = '🧾 Save Sale';
+    }
+  });
+
+  document.getElementById('searchBox').addEventListener('input',      () => renderTable(1));
+  document.getElementById('filterDate').addEventListener('change',    () => renderTable(1));
+  document.getElementById('filterPayment').addEventListener('change', () => renderTable(1));
+  document.getElementById('clearFilters').addEventListener('click', () => {
+    document.getElementById('searchBox').value     = '';
+    document.getElementById('filterDate').value    = '';
+    document.getElementById('filterPayment').value = '';
+    renderTable(1);
+  });
+</script>
+</body>
+</html>
+

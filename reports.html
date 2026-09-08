@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Reports – Pizza Bianos</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+<div class="app-page">
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-brand"><div class="sb-logo">🍕</div><div><strong>Pizza Bianos</strong><small>Inventory System</small></div></div>
+    <nav>
+      <span class="nav-section-label">Main Menu</span>
+      <button class="nav-item" data-page="dashboard.html" onclick="location.href='dashboard.html'"><div class="nav-icon-wrap">📊</div><span class="nav-label">Dashboard</span></button>
+      <button class="nav-item" data-page="products.html" onclick="location.href='products.html'"><div class="nav-icon-wrap">📦</div><span class="nav-label">Products</span><span class="nav-badge hidden" id="lowStockBadge">0</span></button>
+      <button class="nav-item" data-page="stock-in.html" onclick="location.href='stock-in.html'"><div class="nav-icon-wrap">⬇️</div><span class="nav-label">Stock In</span></button>
+      <button class="nav-item" data-page="stock-out.html" onclick="location.href='stock-out.html'"><div class="nav-icon-wrap">⬆️</div><span class="nav-label">Stock Out</span></button>
+      <button class="nav-item" data-page="sales.html" onclick="location.href='sales.html'"><div class="nav-icon-wrap">🧾</div><span class="nav-label">Sales</span></button>
+      <button class="nav-item" data-page="reports.html" onclick="location.href='reports.html'"><div class="nav-icon-wrap">📋</div><span class="nav-label">Reports</span></button>
+      <span class="nav-section-label">Management</span>
+      <button class="nav-item" data-page="users.html" onclick="location.href='users.html'"><div class="nav-icon-wrap">👥</div><span class="nav-label">Users</span></button>
+      <button class="nav-item" data-page="users.html#settings" onclick="location.href='users.html#settings'"><div class="nav-icon-wrap">⚙️</div><span class="nav-label">Settings</span></button>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="sync-status-bar"><div class="sync-dot online"></div><span>Firebase Connected</span></div>
+      <div class="user-card-mini"><div class="user-avatar" id="sbAvatar">A</div><div><strong id="sbUserName">Admin</strong><small id="sbUserRole">Administrator</small></div></div>
+      <button class="sb-logout-btn logout-btn">🚪 <span>Logout</span></button>
+    </div>
+  </aside>
+
+  <div class="main">
+    <header class="topbar">
+      <button class="menu-btn" id="menuBtn">☰</button>
+      <div class="topbar-title"><h1>Reports</h1><p>Inventory and sales analytics</p></div>
+      <div class="topbar-right">
+        <button class="btn btn-ghost btn-sm" onclick="window.print()">🖨 Print</button>
+        <div class="topbar-user-pill"><div class="pill-avatar" id="topbarAvatar">A</div><span id="topbarUserName">Admin</span></div>
+      </div>
+    </header>
+    <div class="overlay hidden" id="sidebarOverlay"></div>
+
+    <main class="content">
+      <div class="page-head">
+        <div><h2>Reports &amp; Analytics</h2><p>Comprehensive overview of your inventory and sales</p></div>
+        <div class="page-head-actions">
+          <input type="date" class="form-control" id="filterFrom" title="From date" />
+          <input type="date" class="form-control" id="filterTo"   title="To date" />
+          <button class="btn btn-primary btn-sm" id="applyFilter">Apply</button>
+          <button class="btn btn-ghost btn-sm"   id="clearFilter">Clear</button>
+        </div>
+      </div>
+
+      <!-- Loading -->
+      <div id="loadingState" style="text-align:center;padding:48px">
+        <div class="loading-spinner" style="margin:0 auto 12px"></div>
+        <p class="text-muted">Loading reports…</p>
+      </div>
+
+      <!-- Content (hidden until loaded) -->
+      <div id="reportsContent" class="hidden">
+        <!-- Tabs -->
+        <div class="tabs">
+          <button class="tab-btn active" data-tab="summary">📊 Summary</button>
+          <button class="tab-btn" data-tab="stockReport">📦 Stock Report</button>
+          <button class="tab-btn" data-tab="stockIn">⬇️ Stock In</button>
+          <button class="tab-btn" data-tab="stockOut">⬆️ Stock Out</button>
+          <button class="tab-btn" data-tab="salesReport">💰 Sales</button>
+          <button class="tab-btn" data-tab="lowStock">⚠️ Low Stock</button>
+        </div>
+
+        <!-- Summary -->
+        <div id="tab-summary">
+          <div class="summary-grid" id="summaryCards"></div>
+          <div class="dashboard-grid">
+            <div class="panel">
+              <div class="panel-header"><h3>📈 Product Stock Levels</h3></div>
+              <div class="panel-body"><div class="chart-wrap"><div class="bar-chart" id="stockChartReport" style="height:160px"></div></div></div>
+            </div>
+            <div class="panel">
+              <div class="panel-header"><h3>💳 Sales by Payment Method</h3></div>
+              <div class="panel-body" id="paymentBreakdown"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Stock Report -->
+        <div id="tab-stockReport" class="hidden">
+          <div class="panel">
+            <div class="panel-header"><h3>📦 Current Stock Levels</h3><span id="stockRepCount" class="badge badge-blue"></span></div>
+            <div class="table-wrapper">
+              <table><thead><tr><th>#</th><th>Product</th><th>Category</th><th>Supplier</th><th class="number">Quantity</th><th>Unit</th><th>Reorder</th><th>Status</th></tr></thead>
+              <tbody id="stockRepBody"></tbody></table>
+            </div>
+          </div>
+        </div>
+
+        <!-- Stock In -->
+        <div id="tab-stockIn" class="hidden">
+          <div class="panel">
+            <div class="panel-header"><h3>⬇️ Stock In Transactions</h3><span id="sinRepCount" class="badge badge-green"></span></div>
+            <div class="table-wrapper">
+              <table><thead><tr><th>ID</th><th>Date</th><th>Product</th><th class="number">Qty</th><th>Unit</th><th>Supplier</th><th>Received By</th></tr></thead>
+              <tbody id="sinRepBody"></tbody></table>
+            </div>
+          </div>
+        </div>
+
+        <!-- Stock Out -->
+        <div id="tab-stockOut" class="hidden">
+          <div class="panel">
+            <div class="panel-header"><h3>⬆️ Stock Out Transactions</h3><span id="soutRepCount" class="badge badge-orange"></span></div>
+            <div class="table-wrapper">
+              <table><thead><tr><th>ID</th><th>Date</th><th>Product</th><th class="number">Qty</th><th>Unit</th><th>Used For</th><th>Requested By</th></tr></thead>
+              <tbody id="soutRepBody"></tbody></table>
+            </div>
+          </div>
+        </div>
+
+        <!-- Sales -->
+        <div id="tab-salesReport" class="hidden">
+          <div class="panel">
+            <div class="panel-header"><h3>💰 Sales Transactions</h3><span id="salesRepCount" class="badge badge-purple"></span></div>
+            <div class="table-wrapper">
+              <table><thead><tr><th>Invoice #</th><th>Date</th><th>Customer</th><th class="number">Items</th><th class="number">Amount</th><th>Payment</th><th>Status</th></tr></thead>
+              <tbody id="salesRepBody"></tbody></table>
+            </div>
+            <div class="panel-header" style="justify-content:flex-end;border-top:1px solid var(--border);border-bottom:0">
+              <strong>Total Revenue: <span id="salesRepTotal" class="text-green"></span></strong>
+            </div>
+          </div>
+        </div>
+
+        <!-- Low Stock -->
+        <div id="tab-lowStock" class="hidden">
+          <div class="panel">
+            <div class="panel-header"><h3>⚠️ Low Stock Items</h3><span id="lowRepCount" class="badge badge-red"></span></div>
+            <div class="table-wrapper">
+              <table><thead><tr><th>#</th><th>Product</th><th>Category</th><th>Supplier</th><th class="number">Current Qty</th><th>Unit</th><th>Reorder Level</th><th>Status</th></tr></thead>
+              <tbody id="lowRepBody"></tbody></table>
+            </div>
+          </div>
+        </div>
+      </div><!-- /reportsContent -->
+
+    </main>
+  </div>
+</div>
+
+<div id="toast" class="toast"></div>
+
+<script type="module">
+  import { authGuard, DB, formatPeso, formatDate, renderBarChart } from './js/app.js';
+
+  let fromDate = '', toDate = '';
+  let data = {};
+
+  /* Tabs */
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      this.classList.add('active');
+      document.querySelectorAll('[id^="tab-"]').forEach(el => el.classList.add('hidden'));
+      document.getElementById(`tab-${this.dataset.tab}`).classList.remove('hidden');
+    });
+  });
+
+  /* Date filter */
+  document.getElementById('applyFilter').addEventListener('click', () => {
+    fromDate = document.getElementById('filterFrom').value;
+    toDate   = document.getElementById('filterTo').value;
+    buildAll();
+  });
+  document.getElementById('clearFilter').addEventListener('click', () => {
+    document.getElementById('filterFrom').value = '';
+    document.getElementById('filterTo').value   = '';
+    fromDate = ''; toDate = '';
+    buildAll();
+  });
+
+  function inRange(date) {
+    if (!fromDate && !toDate) return true;
+    if (fromDate && (date||'') < fromDate) return false;
+    if (toDate   && (date||'') > toDate)   return false;
+    return true;
+  }
+
+  authGuard(async () => {
+    const [products, stockIn, stockOut, sales, settings] = await Promise.all([
+      DB.getProducts(), DB.getStockIn(), DB.getStockOut(), DB.getSales(), DB.getSettings()
+    ]);
+    data = { products, stockIn, stockOut, sales, settings };
+    document.getElementById('loadingState').classList.add('hidden');
+    document.getElementById('reportsContent').classList.remove('hidden');
+    buildAll();
+  });
+
+  function buildAll() {
+    buildSummary();
+    buildStockReport();
+    buildSinReport();
+    buildSoutReport();
+    buildSalesReport();
+    buildLowReport();
+  }
+
+  function buildSummary() {
+    const { products, stockIn, stockOut, sales, settings } = data;
+    const threshold = settings?.lowStockThreshold || 5;
+    const filtSin   = stockIn.filter(r => inRange(r.date));
+    const filtSout  = stockOut.filter(r => inRange(r.date));
+    const filtSales = sales.filter(s => inRange(s.date));
+    const revenue   = filtSales.reduce((s,r) => s + Number(r.totalAmount||0), 0);
+    const lowCount  = products.filter(p => (p.quantity||0) <= threshold).length;
+
+    document.getElementById('summaryCards').innerHTML = `
+      <div class="summary-card green"><h3>${formatPeso(revenue)}</h3><p>💰 Total Sales Revenue</p></div>
+      <div class="summary-card blue"><h3>${filtSin.length}</h3><p>⬇️ Stock In Transactions</p></div>
+      <div class="summary-card yellow"><h3>${filtSout.length}</h3><p>⬆️ Stock Out Transactions</p></div>
+      <div class="summary-card red"><h3>${lowCount}</h3><p>⚠️ Low Stock Items</p></div>`;
+
+    renderBarChart('stockChartReport', products.slice(0,6).map(p=>p.name), products.slice(0,6).map(p=>p.quantity||0));
+
+    const payMap   = {};
+    const colors   = { Cash:'#16a34a', GCash:'#2563eb', Online:'#7c3aed', Card:'#ea580c' };
+    filtSales.forEach(s => { payMap[s.payment] = (payMap[s.payment]||0) + Number(s.totalAmount||0); });
+    const total = Object.values(payMap).reduce((a,b)=>a+b,0)||1;
+    const payHtml = Object.entries(payMap).map(([m,a]) => {
+      const pct = Math.round(a/total*100);
+      return `<div style="margin-bottom:14px">
+        <div class="flex-between mb-12"><span class="fw-bold" style="font-size:13px">${m}</span><span class="fw-bold" style="font-size:13px">${formatPeso(a)} <span class="text-muted">(${pct}%)</span></span></div>
+        <div style="height:8px;background:#f3f4f6;border-radius:999px;overflow:hidden">
+          <div style="height:100%;width:${pct}%;background:${colors[m]||'#6b7280'};border-radius:999px;transition:width .5s"></div>
+        </div></div>`;
+    }).join('');
+    document.getElementById('paymentBreakdown').innerHTML = payHtml ||
+      `<div class="empty-state" style="padding:20px"><p>No sales data for this period.</p></div>`;
+  }
+
+  function buildStockReport() {
+    const { products, settings } = data;
+    const threshold = settings?.lowStockThreshold || 5;
+    document.getElementById('stockRepCount').textContent = `${products.length} products`;
+    document.getElementById('stockRepBody').innerHTML = products.map((p,i) => {
+      const isLow = (p.quantity||0) <= threshold;
+      return `<tr class="${isLow?'low-stock':''}">
+        <td class="text-muted">${i+1}</td><td><strong>${p.name}</strong></td><td>${p.category||'—'}</td>
+        <td>${p.supplier||'—'}</td><td class="number fw-bold ${isLow?'text-red':''}">${p.quantity||0}</td>
+        <td>${p.unit}</td><td class="number">${p.reorderLevel??'—'}</td>
+        <td>${isLow?'<span class="badge badge-red">⚠ Low</span>':'<span class="badge badge-green">✔ OK</span>'}</td>
+      </tr>`;
+    }).join('') || emptyRow(8);
+  }
+
+  function buildSinReport() {
+    const filtered = data.stockIn.filter(r => inRange(r.date));
+    document.getElementById('sinRepCount').textContent = `${filtered.length} records`;
+    document.getElementById('sinRepBody').innerHTML = filtered.map(r =>
+      `<tr><td><span class="badge badge-green" style="font-size:11px">${r.id}</span></td>
+      <td>${formatDate(r.date)}</td><td><strong>${r.product}</strong></td>
+      <td class="number text-green fw-bold">+${r.quantity}</td><td>${r.unit}</td>
+      <td>${r.supplier||'—'}</td><td>${r.receivedBy||'—'}</td></tr>`
+    ).join('') || emptyRow(7);
+  }
+
+  function buildSoutReport() {
+    const filtered = data.stockOut.filter(r => inRange(r.date));
+    document.getElementById('soutRepCount').textContent = `${filtered.length} records`;
+    document.getElementById('soutRepBody').innerHTML = filtered.map(r =>
+      `<tr><td><span class="badge badge-orange" style="font-size:11px">${r.id}</span></td>
+      <td>${formatDate(r.date)}</td><td><strong>${r.product}</strong></td>
+      <td class="number text-red fw-bold">-${r.quantity}</td><td>${r.unit}</td>
+      <td>${r.usedFor||'—'}</td><td>${r.requestedBy||'—'}</td></tr>`
+    ).join('') || emptyRow(7);
+  }
+
+  function buildSalesReport() {
+    const filtered = data.sales.filter(s => inRange(s.date));
+    const total    = filtered.reduce((s,r) => s + Number(r.totalAmount||0), 0);
+    const PAY_BADGE = { Cash:'badge-green', GCash:'badge-blue', Online:'badge-purple', Card:'badge-orange' };
+    const STS_BADGE = { Paid:'badge-green', Pending:'badge-yellow', Cancelled:'badge-red' };
+    document.getElementById('salesRepCount').textContent = `${filtered.length} transactions`;
+    document.getElementById('salesRepTotal').textContent = formatPeso(total);
+    document.getElementById('salesRepBody').innerHTML = filtered.map(s =>
+      `<tr><td><strong>${s.id||'—'}</strong></td><td>${formatDate(s.date)}</td>
+      <td>${s.customer||'Walk-in Customer'}</td><td class="number">${s.items}</td>
+      <td class="number fw-bold text-green">${formatPeso(s.totalAmount)}</td>
+      <td><span class="badge ${PAY_BADGE[s.payment]||'badge-gray'}">${s.payment}</span></td>
+      <td><span class="badge ${STS_BADGE[s.status]||'badge-gray'}">${s.status}</span></td></tr>`
+    ).join('') || emptyRow(7);
+  }
+
+  function buildLowReport() {
+    const { products, settings } = data;
+    const threshold = settings?.lowStockThreshold || 5;
+    const low = products.filter(p => (p.quantity||0) <= threshold);
+    document.getElementById('lowRepCount').textContent = `${low.length} items`;
+    document.getElementById('lowRepBody').innerHTML = low.map((p,i) =>
+      `<tr class="low-stock"><td class="text-muted">${i+1}</td><td><strong>${p.name}</strong></td>
+      <td>${p.category||'—'}</td><td>${p.supplier||'—'}</td>
+      <td class="number fw-bold text-red">${p.quantity||0}</td><td>${p.unit}</td>
+      <td class="number">${p.reorderLevel??'—'}</td>
+      <td><span class="badge badge-red">⚠ Low Stock</span></td></tr>`
+    ).join('') || `<tr><td colspan="8"><div class="empty-state" style="padding:24px"><div class="es-icon">✅</div><p>No low stock items!</p></div></td></tr>`;
+  }
+
+  function emptyRow(cols) {
+    return `<tr><td colspan="${cols}"><div class="empty-state" style="padding:24px"><p>No records for this period.</p></div></td></tr>`;
+  }
+</script>
+</body>
+</html>

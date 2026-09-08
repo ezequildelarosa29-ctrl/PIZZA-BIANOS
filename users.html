@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Users &amp; Settings – Pizza Bianos</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+<div class="app-page">
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-brand"><div class="sb-logo">🍕</div><div><strong>Pizza Bianos</strong><small>Inventory System</small></div></div>
+    <nav>
+      <span class="nav-section-label">Main Menu</span>
+      <button class="nav-item" data-page="dashboard.html" onclick="location.href='dashboard.html'"><div class="nav-icon-wrap">📊</div><span class="nav-label">Dashboard</span></button>
+      <button class="nav-item" data-page="products.html" onclick="location.href='products.html'"><div class="nav-icon-wrap">📦</div><span class="nav-label">Products</span><span class="nav-badge hidden" id="lowStockBadge">0</span></button>
+      <button class="nav-item" data-page="stock-in.html" onclick="location.href='stock-in.html'"><div class="nav-icon-wrap">⬇️</div><span class="nav-label">Stock In</span></button>
+      <button class="nav-item" data-page="stock-out.html" onclick="location.href='stock-out.html'"><div class="nav-icon-wrap">⬆️</div><span class="nav-label">Stock Out</span></button>
+      <button class="nav-item" data-page="sales.html" onclick="location.href='sales.html'"><div class="nav-icon-wrap">🧾</div><span class="nav-label">Sales</span></button>
+      <button class="nav-item" data-page="reports.html" onclick="location.href='reports.html'"><div class="nav-icon-wrap">📋</div><span class="nav-label">Reports</span></button>
+      <span class="nav-section-label">Management</span>
+      <button class="nav-item" data-page="users.html" onclick="location.href='users.html'"><div class="nav-icon-wrap">👥</div><span class="nav-label">Users</span></button>
+      <button class="nav-item" data-page="users.html#settings" onclick="location.href='users.html#settings'"><div class="nav-icon-wrap">⚙️</div><span class="nav-label">Settings</span></button>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="sync-status-bar"><div class="sync-dot online"></div><span>Firebase Connected</span></div>
+      <div class="user-card-mini"><div class="user-avatar" id="sbAvatar">A</div><div><strong id="sbUserName">Admin</strong><small id="sbUserRole">Administrator</small></div></div>
+      <button class="sb-logout-btn logout-btn">🚪 <span>Logout</span></button>
+    </div>
+  </aside>
+
+  <div class="main">
+    <header class="topbar">
+      <button class="menu-btn" id="menuBtn">☰</button>
+      <div class="topbar-title"><h1>Users &amp; Settings</h1><p>Manage system users and configuration</p></div>
+      <div class="topbar-right"><div class="topbar-user-pill"><div class="pill-avatar" id="topbarAvatar">A</div><span id="topbarUserName">Admin</span></div></div>
+    </header>
+    <div class="overlay hidden" id="sidebarOverlay"></div>
+
+    <main class="content">
+      <div class="tabs">
+        <button class="tab-btn active" data-tab="users">👥 Users</button>
+        <button class="tab-btn" data-tab="settings">⚙️ Settings</button>
+      </div>
+
+      <!-- USERS TAB -->
+      <div id="tab-users">
+        <div class="page-head">
+          <div><h2>User Management</h2><p>System users registered via Firebase Auth</p></div>
+          <div class="page-head-actions" id="addUserWrap">
+            <button class="btn btn-primary" id="addUserBtn">➕ Add User</button>
+          </div>
+        </div>
+        <div class="toolbar">
+          <input type="text" class="search-box" id="userSearch" placeholder="🔍  Search users…" />
+          <select class="select-box" id="filterRole">
+            <option value="">All Roles</option>
+            <option>Administrator</option><option>Cashier</option><option>Staff</option>
+          </select>
+          <span id="userCount" class="badge badge-blue" style="margin-left:auto"></span>
+        </div>
+        <div class="panel">
+          <div class="table-wrapper">
+            <table>
+              <thead><tr><th>#</th><th>Name</th><th>Email</th><th>Role</th><th>Status</th><th>Actions</th></tr></thead>
+              <tbody id="usersBody"></tbody>
+            </table>
+          </div>
+          <div id="usersEmpty"></div>
+        </div>
+        <div class="info-box mt-16">
+          <strong>ℹ️ Note:</strong> To create new login accounts, go to <a href="https://console.firebase.google.com" target="_blank" rel="noopener">Firebase Console → Authentication → Add user</a>, then add their profile here.
+        </div>
+      </div>
+
+      <!-- SETTINGS TAB -->
+      <div id="tab-settings" class="hidden">
+        <div class="page-head"><div><h2>System Settings</h2><p>Configure store information and preferences</p></div></div>
+        <div style="display:grid;grid-template-columns:1.2fr 1fr;gap:20px" class="settings-grid">
+
+          <div class="panel">
+            <div class="panel-header"><h3>🏪 Store Information</h3></div>
+            <form id="settingsForm" novalidate>
+              <div class="form-grid">
+                <div class="form-group full"><label>Store Name <span class="req">*</span></label><input type="text" class="form-control" id="sStoreName" placeholder="Pizza Bianos" /></div>
+                <div class="form-group full"><label>Store Address</label><input type="text" class="form-control" id="sStoreAddress" placeholder="Address" /></div>
+                <div class="form-group full"><label>Contact Number</label><input type="text" class="form-control" id="sContact" placeholder="09XXXXXXXXX" /></div>
+                <div class="form-group full">
+                  <label>Low Stock Threshold</label>
+                  <input type="number" class="form-control" id="sThreshold" min="1" placeholder="5" />
+                  <small class="text-muted mt-4" style="display:block;font-size:12px">Products at or below this quantity will be flagged as low stock.</small>
+                </div>
+              </div>
+              <div class="form-actions"><button type="submit" class="btn btn-primary">💾 Save Changes</button></div>
+            </form>
+          </div>
+
+          <div style="display:flex;flex-direction:column;gap:18px">
+            <div class="panel">
+              <div class="panel-header"><h3>📊 System Overview</h3></div>
+              <div class="panel-body" id="sysOverview"><p class="text-muted">Loading…</p></div>
+            </div>
+            <div class="panel">
+              <div class="panel-header"><h3>🗄️ Data Management</h3></div>
+              <div class="panel-body">
+                <p class="text-muted" style="font-size:13px;margin-bottom:14px">Export system data as JSON backup.</p>
+                <div style="display:flex;flex-direction:column;gap:10px">
+                  <button class="btn btn-ghost" id="exportBtn">📥 Export All Data (JSON)</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </main>
+  </div>
+</div>
+
+<!-- ADD/EDIT USER PROFILE MODAL -->
+<div class="modal hidden" id="userModal">
+  <div class="modal-card" style="width:min(500px,100%)">
+    <div class="modal-header"><h2 id="userModalTitle">Add User Profile</h2><button class="close-btn" id="closeUserModal">✕</button></div>
+    <form id="userForm" novalidate>
+      <div class="form-grid">
+        <div class="form-group full"><label>Full Name <span class="req">*</span></label><input type="text" class="form-control" id="fName" placeholder="Full name" /></div>
+        <div class="form-group full">
+          <label>Email (Firebase Auth UID or Email) <span class="req">*</span></label>
+          <input type="text" class="form-control" id="fUid" placeholder="Firebase UID or email" />
+          <small class="text-muted mt-4" style="display:block;font-size:12px">Copy from Firebase Console → Authentication → Users → UID</small>
+        </div>
+        <div class="form-group"><label>Role <span class="req">*</span></label>
+          <select class="form-control" id="fRole">
+            <option value="">Select role</option>
+            <option>Administrator</option><option>Cashier</option><option>Staff</option>
+          </select>
+        </div>
+        <div class="form-group"><label>Status</label>
+          <select class="form-control" id="fStatus">
+            <option value="Active">Active</option><option value="Inactive">Inactive</option>
+          </select>
+        </div>
+      </div>
+      <div id="userFormError" class="error-msg" style="padding:0 20px 10px"></div>
+      <div class="form-actions">
+        <button type="button" class="btn btn-ghost" id="cancelUserModal">Cancel</button>
+        <button type="submit" class="btn btn-primary">💾 Save Profile</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div id="toast" class="toast"></div>
+
+<script type="module">
+  import { authGuard, DB, formatDate, showToast, openModal, closeModal, formatPeso } from './js/app.js';
+  import { db } from './js/firebase-config.js';
+  import { doc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+  let allUsers = [];
+  let editingUid = null;
+  let isAdmin = false;
+  let session;
+
+  document.getElementById('closeUserModal').onclick  = () => closeModal('userModal');
+  document.getElementById('cancelUserModal').onclick = () => closeModal('userModal');
+
+  /* Tabs */
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      this.classList.add('active');
+      document.querySelectorAll('[id^="tab-"]').forEach(el => el.classList.add('hidden'));
+      document.getElementById(`tab-${this.dataset.tab}`).classList.remove('hidden');
+      if (this.dataset.tab === 'settings') loadSettings();
+    });
+  });
+
+  if (window.location.hash === '#settings') {
+    document.querySelector('[data-tab="settings"]').click();
+  }
+
+  authGuard(async (s) => {
+    session = s;
+    isAdmin = s.role === 'Administrator';
+    if (!isAdmin) {
+      document.getElementById('addUserWrap').style.display = 'none';
+    }
+    allUsers = await DB.getUsers();
+    renderUsers();
+    loadSettings();
+  });
+
+  function renderUsers() {
+    const search = document.getElementById('userSearch').value.toLowerCase();
+    const role   = document.getElementById('filterRole').value;
+    const data   = allUsers.filter(u => {
+      const ms = !search || (u.name||'').toLowerCase().includes(search) || (u.email||u.id||'').toLowerCase().includes(search);
+      const mr = !role   || u.role === role;
+      return ms && mr;
+    });
+
+    document.getElementById('userCount').textContent = `${data.length} user${data.length!==1?'s':''}`;
+    const tbody = document.getElementById('usersBody');
+    const empty = document.getElementById('usersEmpty');
+    const ROLE_BADGE = { Administrator:'badge-red', Cashier:'badge-blue', Staff:'badge-green' };
+    const STS_BADGE  = { Active:'badge-green', Inactive:'badge-gray' };
+
+    if (!data.length) {
+      tbody.innerHTML = '';
+      empty.innerHTML = `<div class="empty-state"><div class="es-icon">👥</div><h4>No user profiles found</h4><p>Add user profiles to manage access roles.</p></div>`;
+      return;
+    }
+    empty.innerHTML = '';
+    tbody.innerHTML = data.map((u, i) => {
+      const isSelf = u.id === session.uid;
+      return `<tr>
+        <td class="text-muted">${i+1}</td>
+        <td><strong>${u.name||'—'}</strong> ${isSelf?'<span class="badge badge-blue">You</span>':''}</td>
+        <td style="font-size:12px;color:var(--muted)">${u.email||u.id}</td>
+        <td><span class="badge ${ROLE_BADGE[u.role]||'badge-gray'}">${u.role||'—'}</span></td>
+        <td><span class="badge ${STS_BADGE[u.status]||'badge-gray'}">${u.status||'Active'}</span></td>
+        <td><div class="actions">
+          ${isAdmin?`<button class="btn btn-sm btn-warning" data-edit="${u.id}">✏️ Edit</button>
+          ${!isSelf?`<button class="btn btn-sm btn-danger" data-del="${u.id}">🗑 Delete</button>`:''}`:'' }
+        </div></td>
+      </tr>`;
+    }).join('');
+
+    tbody.querySelectorAll('[data-edit]').forEach(b => b.onclick = () => editUser(b.dataset.edit));
+    tbody.querySelectorAll('[data-del]').forEach(b  => b.onclick = () => deleteUser(b.dataset.del));
+  }
+
+  function editUser(uid) {
+    const u = allUsers.find(x => x.id === uid);
+    if (!u) return;
+    editingUid = uid;
+    document.getElementById('userModalTitle').textContent = 'Edit User Profile';
+    document.getElementById('fName').value   = u.name   || '';
+    document.getElementById('fUid').value    = u.email  || uid;
+    document.getElementById('fRole').value   = u.role   || '';
+    document.getElementById('fStatus').value = u.status || 'Active';
+    document.getElementById('fUid').readOnly = true;
+    document.getElementById('userFormError').textContent = '';
+    openModal('userModal');
+  }
+
+  async function deleteUser(uid) {
+    if (uid === session.uid) { showToast("You can't delete your own profile.", 'error'); return; }
+    if (!confirm('Delete this user profile? They will lose their role/access settings.')) return;
+    try {
+      await deleteDoc(doc(db, 'users', uid));
+      showToast('User profile deleted.', 'success');
+      allUsers = await DB.getUsers();
+      renderUsers();
+    } catch (e) { showToast('Error: ' + e.message, 'error'); }
+  }
+
+  document.getElementById('addUserBtn')?.addEventListener('click', () => {
+    editingUid = null;
+    document.getElementById('userModalTitle').textContent = 'Add User Profile';
+    document.getElementById('userForm').reset();
+    document.getElementById('fUid').readOnly = false;
+    document.getElementById('userFormError').textContent = '';
+    openModal('userModal');
+  });
+
+  document.getElementById('userForm').addEventListener('submit', async e => {
+    e.preventDefault();
+    const name   = document.getElementById('fName').value.trim();
+    const uid    = editingUid || document.getElementById('fUid').value.trim();
+    const role   = document.getElementById('fRole').value;
+    const status = document.getElementById('fStatus').value;
+    const errEl  = document.getElementById('userFormError');
+
+    if (!name) { errEl.textContent='Full name is required.'; return; }
+    if (!uid)  { errEl.textContent='UID/Email is required.'; return; }
+    if (!role) { errEl.textContent='Please select a role.'; return; }
+    errEl.textContent = '';
+
+    const btn = e.target.querySelector('[type=submit]');
+    btn.disabled = true; btn.textContent = 'Saving…';
+
+    try {
+      await DB.updateUserProfile(uid, { name, email: uid, role, status });
+      showToast('User profile saved!', 'success');
+      closeModal('userModal');
+      allUsers = await DB.getUsers();
+      renderUsers();
+    } catch (err) {
+      errEl.textContent = err.message;
+    } finally {
+      btn.disabled = false; btn.textContent = '💾 Save Profile';
+    }
+  });
+
+  document.getElementById('userSearch').addEventListener('input',  renderUsers);
+  document.getElementById('filterRole').addEventListener('change', renderUsers);
+
+  /* Settings */
+  async function loadSettings() {
+    const s = await DB.getSettings();
+    document.getElementById('sStoreName').value    = s.storeName    || '';
+    document.getElementById('sStoreAddress').value = s.storeAddress || '';
+    document.getElementById('sContact').value      = s.contactNumber || '';
+    document.getElementById('sThreshold').value    = s.lowStockThreshold || 5;
+    buildSysOverview();
+  }
+
+  async function buildSysOverview() {
+    const [products, users, stockIn, stockOut, sales] = await Promise.all([
+      DB.getProducts(), DB.getUsers(), DB.getStockIn(), DB.getStockOut(), DB.getSales()
+    ]);
+    const revenue = sales.reduce((s,r) => s + Number(r.totalAmount||0), 0);
+    document.getElementById('sysOverview').innerHTML = `
+      <div style="display:grid;gap:10px">
+        ${[['📦 Products', products.length],['👥 User Profiles', users.length],
+           ['⬇️ Stock In Records', stockIn.length],['⬆️ Stock Out Records', stockOut.length],
+           ['🧾 Sales Records', sales.length],['💰 Total Revenue', formatPeso(revenue)]]
+          .map(([label, val]) => `
+            <div class="flex-between" style="padding:8px 0;border-bottom:1px solid var(--border)">
+              <span style="font-size:13px;color:var(--text-secondary)">${label}</span>
+              <strong style="font-size:14px">${val}</strong>
+            </div>`).join('')}
+      </div>`;
+  }
+
+  document.getElementById('settingsForm').addEventListener('submit', async e => {
+    e.preventDefault();
+    const s = {
+      storeName:         document.getElementById('sStoreName').value.trim(),
+      storeAddress:      document.getElementById('sStoreAddress').value.trim(),
+      contactNumber:     document.getElementById('sContact').value.trim(),
+      lowStockThreshold: parseInt(document.getElementById('sThreshold').value)||5,
+    };
+    if (!s.storeName) { showToast('Store name is required.', 'error'); return; }
+    const btn = e.target.querySelector('[type=submit]');
+    btn.disabled = true; btn.textContent = 'Saving…';
+    try {
+      await DB.saveSettings(s);
+      showToast('Settings saved!', 'success');
+    } catch (err) { showToast('Error: ' + err.message, 'error'); }
+    finally { btn.disabled = false; btn.textContent = '💾 Save Changes'; }
+  });
+
+  /* Export */
+  document.getElementById('exportBtn').addEventListener('click', async () => {
+    const [products, stockIn, stockOut, sales, settings] = await Promise.all([
+      DB.getProducts(), DB.getStockIn(), DB.getStockOut(), DB.getSales(), DB.getSettings()
+    ]);
+    const exportData = { products, stockIn, stockOut, sales, settings, exportedAt: new Date().toISOString() };
+    const blob = new Blob([JSON.stringify(exportData, null, 2)], { type:'application/json' });
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    a.href = url;
+    a.download = `pizza-bianos-export-${new Date().toISOString().split('T')[0]}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+    showToast('Data exported!', 'success');
+  });
+</script>
+</body>
+</html>

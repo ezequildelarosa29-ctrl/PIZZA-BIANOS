@@ -6,14 +6,15 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/fireba
 import { getAuth }       from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 import { getFirestore }  from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
+// For Firebase JS SDK v7.20.0 and later, measurementId is optional
 const firebaseConfig = {
-  apiKey:            "AIzaSyCa8xaQ9KrjzR5yuWjDo-vrx6AEz35MhEQ",
-  authDomain:        "bianos-pizza.firebaseapp.com",
-  projectId:         "bianos-pizza",
-  storageBucket:     "bianos-pizza.firebasestorage.app",
+  apiKey: "AIzaSyCa8xaQ9KrjzR5yuWjDo-vrx6AEz35MhEQ",
+  authDomain: "bianos-pizza.firebaseapp.com",
+  projectId: "bianos-pizza",
+  storageBucket: "bianos-pizza.firebasestorage.app",
   messagingSenderId: "434673666029",
-  appId:             "1:434673666029:web:6f20a780c9219f3f1b09e4",
-  measurementId:     "G-R888FT938Q"
+  appId: "1:434673666029:web:6f20a780c9219f3f1b09e4",
+  measurementId: "G-R888FT938Q"
 };
 
 const app = initializeApp(firebaseConfig);
